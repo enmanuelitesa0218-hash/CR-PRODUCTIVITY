@@ -9,7 +9,7 @@ const globalHours = [
     "19:00 - 20:00", "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 00:00"
 ];
 
-const CLOUD_URL = "https://api.npoint.io/970ad99a54f2fc132cde";
+const CLOUD_URL = "https://api.npoint.io/102d080a24db9c95776f";
 
 // --- Global Data ---
 let appTechnicians = [];
