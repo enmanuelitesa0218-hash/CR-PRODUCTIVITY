@@ -1,5 +1,5 @@
 // ==========================================
-// Productivity JABIL DR - CLOUD SYNC PRO
+// Productivity JABIL DR - CLOUD SYNC PRO (JSONBLOB)
 // ==========================================
 
 const globalHours = [
@@ -9,7 +9,8 @@ const globalHours = [
     "19:00 - 20:00", "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 00:00"
 ];
 
-const CLOUD_URL = "https://api.npoint.io/102d080a24db9c95776f";
+// SERVIDOR ULTRA ESTABLE
+const CLOUD_URL = "https://jsonblob.com/api/jsonBlob/019db2d4-b86a-7a84-b3a0-b612e3361427";
 
 // --- Global Data ---
 let appTechnicians = [];
@@ -17,7 +18,7 @@ let productivityData = {};
 let productivityChartInstance = null;
 
 // ------------------------------------------
-// Cloud Sync Logic (Zero-Config)
+// Cloud Sync Logic
 // ------------------------------------------
 
 async function syncWithCloud() {
@@ -28,19 +29,14 @@ async function syncWithCloud() {
         if (data && data.techs) {
             appTechnicians = data.techs;
             productivityData = data.productivity || {};
-            
-            // Persistir localmente como backup
             localStorage.setItem('jabil_techs_list', JSON.stringify(appTechnicians));
             localStorage.setItem('jabil_proto_data', JSON.stringify(productivityData));
-            
             refreshUI();
-            updateLastSync();
         } else {
-            // Primer inicio o datos vacíos
             loadLocalBackup();
         }
     } catch (error) {
-        console.error("Error de conexión con la nube:", error);
+        console.warn("Cloud offline, using local backup.");
         loadLocalBackup();
     }
 }
@@ -61,20 +57,15 @@ async function saveToCloud() {
             lastUpdate: new Date().toISOString()
         };
         
-        const response = await fetch(CLOUD_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+        await fetch(CLOUD_URL, {
+            method: 'PUT', // JSONBlob usa PUT para actualizar
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataToSave)
         });
-
-        if (!response.ok) throw new Error("Error en respuesta del servidor");
         
-        console.log("Datos guardados en la nube con éxito.");
         updateLastSync();
     } catch (error) {
-        console.error("Error al guardar en la nube:", error);
+        console.error("Error saving to cloud:", error);
     }
 }
 
@@ -90,12 +81,12 @@ function updateLastSync() {
     const el = document.getElementById('last-sync-time');
     if(el) {
         const now = new Date();
-        el.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:#22c55e"></i> Online: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        el.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:#22c55e"></i> Cloud OK: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
     }
 }
 
-// Polling suave cada 30 segundos para sincronizar otros usuarios
-setInterval(syncWithCloud, 30000);
+// Sincronizar cada 15 segundos
+setInterval(syncWithCloud, 15000);
 
 // ------------------------------------------
 // KPI & Dashboard Logic
@@ -370,20 +361,15 @@ function submitProductivity(techId, hour, serials) {
 
     saveToCloud();
     refreshUI();
-
-    // Notificación y Cierre Automático
     showSuccessNotification();
 }
 
 function showSuccessNotification() {
     const toast = document.getElementById('success-toast');
     if(!toast) return;
-
     toast.style.display = 'flex';
-    
     setTimeout(() => {
         toast.style.display = 'none';
-        // Regresar al Dashboard automáticamente
         const dashBtn = document.querySelector('[data-target="dashboard-view"]');
         if(dashBtn) dashBtn.click();
     }, 1500);
@@ -436,11 +422,10 @@ function renderChart() {
     });
 }
 
-// Admin
 function showTechAuthModal(tech, ok, cancel) {
     const m = document.getElementById('tech-auth-modal');
     const input = document.getElementById('tech-password-input');
-    document.getElementById('tech-auth-desc').textContent = `Hola ${tech.name}, ingresa tu PIN:`;
+    document.getElementById('tech-auth-desc').textContent = `Hola ${tech.name}, PIN:`;
     m.classList.add('active');
     setTimeout(() => input.focus(), 100);
     document.getElementById('btn-tech-cancel').onclick = () => { m.classList.remove('active'); cancel(); };
