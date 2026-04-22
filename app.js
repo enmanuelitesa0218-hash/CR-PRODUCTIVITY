@@ -26,14 +26,18 @@ async function syncWithCloud() {
         const response = await fetch(CLOUD_URL);
         const data = await response.json();
         
-        if (data && data.techs) {
+        // Si hay datos en la nube, los descargamos
+        if (data && data.techs && data.techs.length > 0) {
             appTechnicians = data.techs;
             productivityData = data.productivity || {};
             localStorage.setItem('jabil_techs_list', JSON.stringify(appTechnicians));
             localStorage.setItem('jabil_proto_data', JSON.stringify(productivityData));
             refreshUI();
         } else {
+            // Si la nube está vacía, subimos lo que tenemos localmente
+            console.log("Nube vacía. Sincronizando datos locales hacia la nube...");
             loadLocalBackup();
+            saveToCloud(); // Subir lo local para que ya no esté vacío
         }
     } catch (error) {
         console.warn("Cloud offline, using local backup.");
